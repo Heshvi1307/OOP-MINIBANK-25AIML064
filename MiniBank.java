@@ -18,6 +18,23 @@ public class MiniBank {
         System.out.println("Welcome to " + bank.bankname() + " - " + bank.branch());
         System.out.println("========================================");
 
+        Account[] accounts = {
+                new Account("Account 1", 1000),
+                new Account("Account 2", 2000),
+                new Account("Account 3", 3000)
+        };
+
+        accounts[0].deposit(500);
+        accounts[1].deposit(1000);
+        accounts[2].withdraw(500);
+
+        for (Account account : accounts) {
+            System.out.println(
+                    account.getAccountNumber() + " - "
+                            + account.getOwnerName() + " - Rs."
+                            + account.getBalance());
+        }
+
         boolean exit = false;
 
         while (!exit) {
