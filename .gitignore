@@ -8,3 +8,6 @@
 bin/
 out/
 target/
+
+# Windows system files
+Thumbs.db
