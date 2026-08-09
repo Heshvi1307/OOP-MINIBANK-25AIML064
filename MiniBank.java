@@ -28,12 +28,65 @@ public class MiniBank {
         accounts[1].deposit(1000);
         accounts[2].withdraw(500);
 
+        System.out.println("\n========== ACCOUNT DETAILS ==========");
+
         for (Account account : accounts) {
-            System.out.println(
-                    account.getAccountNumber() + " - "
-                            + account.getOwnerName() + " - Rs."
-                            + account.getBalance());
+            System.out.println(account);
         }
+
+        System.out.println("\n========== ACCOUNT COMPARISON ==========");
+
+        Account a1 = accounts[0];
+        Account a2 = accounts[1];
+
+        System.out.println("Are Account 1 and Account 2 equal? " + a1.equals(a2));
+
+        System.out.println(
+                "Is Account 1 an Account object? " + (a1 instanceof Account));
+
+        System.out.println("\n========== CUSTOMER ==========");
+
+        System.out.print("Enter customer name: ");
+        String name = sc.nextLine();
+
+        System.out.print("Enter email: ");
+        String email = sc.nextLine();
+
+        System.out.print("Enter mobile: ");
+        String mobile = sc.nextLine();
+
+        Customer customer = new Customer(name, email, mobile);
+
+        System.out.println("\nEnter address details:");
+
+        System.out.print("Address: ");
+        String line = sc.nextLine();
+
+        System.out.print("City: ");
+        String city = sc.nextLine();
+
+        System.out.print("Pincode: ");
+        String pincode = sc.nextLine();
+
+        Customer.Address address = new Customer.Address(line, city, pincode);
+
+        customer.setAddress(address);
+
+        System.out.println("\nCustomer ID: " + customer.getCustomerId());
+        System.out.println("Name: " + customer.getName());
+        System.out.println("Address: "
+                + customer.getAddress().getLine() + ", "
+                + customer.getAddress().getCity() + ", "
+                + customer.getAddress().getPincode());
+
+        Customer clonedCustomer = customer.clone();
+
+        System.out.println(
+                "Customer cloned successfully: "
+                        + (clonedCustomer != null));
+
+        System.out.println("\n========== ACCOUNT STATEMENT ==========");
+        System.out.println(accounts[0].getStatement());
 
         boolean exit = false;
 
