@@ -39,10 +39,11 @@ public class MiniBank {
         Account a1 = accounts[0];
         Account a2 = accounts[1];
 
-        System.out.println("Are Account 1 and Account 2 equal? " + a1.equals(a2));
+        System.out.println("Are Account 1 and Account 2 equal? "
+                + a1.equals(a2));
 
-        System.out.println(
-                "Is Account 1 an Account object? " + (a1 instanceof Account));
+        System.out.println("Is Account 1 an Account object? "
+                + (a1 instanceof Account));
 
         System.out.println("\n========== CUSTOMER ==========");
 
@@ -81,12 +82,46 @@ public class MiniBank {
 
         Customer clonedCustomer = customer.clone();
 
-        System.out.println(
-                "Customer cloned successfully: "
-                        + (clonedCustomer != null));
+        System.out.println("Customer cloned successfully: "
+                + (clonedCustomer != null));
+
+        System.out.println("\n========== VALIDATOR TESTS ==========");
+
+        System.out.println("Valid mobile: "
+                + Validator.isValidMobile("9876543210"));
+
+        System.out.println("Invalid mobile: "
+                + Validator.isValidMobile("12345"));
+
+        System.out.println("Valid email: "
+                + Validator.isValidEmail("abc@xyz.com"));
+
+        System.out.println("Invalid email: "
+                + Validator.isValidEmail("abc@xyz"));
+
+        System.out.println("Valid PAN: "
+                + Validator.isValidPan("ABCDE1234F"));
+
+        System.out.println("Invalid PAN: "
+                + Validator.isValidPan("ABC123"));
+
+        System.out.println("Valid IFSC: "
+                + Validator.isValidIfsc("SBIN0001234"));
+
+        System.out.println("Invalid IFSC: "
+                + Validator.isValidIfsc("SBIN123"));
+
+        System.out.println("\n========== COMMAND PARSER ==========");
+
+        Command command = CommandParser.parse("DEPOSIT AC0001 500");
+
+        System.out.println("Type: " + command.type());
+        System.out.println("Account Number: " + command.accountNumber());
+        System.out.println("Amount: " + command.amount());
 
         System.out.println("\n========== ACCOUNT STATEMENT ==========");
-        System.out.println(accounts[0].getStatement());
+
+        System.out.println(StatementFormatter.buildStatement(accounts[0]));
 
         boolean exit = false;
 
@@ -119,24 +154,29 @@ public class MiniBank {
             switch (option) {
 
                 case OPEN_ACCOUNT:
-                    System.out.println("Open Account — to be implemented in a later lab.");
+                    System.out.println(
+                            "Open Account — to be implemented in a later lab.");
                     break;
 
                 case DEPOSIT:
-                    System.out.println("Deposit — to be implemented in a later lab.");
+                    System.out.println(
+                            "Deposit — to be implemented in a later lab.");
                     break;
 
                 case WITHDRAW:
-                    System.out.println("Withdraw — to be implemented in a later lab.");
+                    System.out.println(
+                            "Withdraw — to be implemented in a later lab.");
                     break;
 
                 case TRANSFER:
-                    System.out.println("Transfer — to be implemented in a later lab.");
+                    System.out.println(
+                            "Transfer — to be implemented in a later lab.");
                     break;
 
                 case EXIT:
                     exit = true;
-                    System.out.println("Thank you for using MiniBank. Goodbye!");
+                    System.out.println(
+                            "Thank you for using MiniBank. Goodbye!");
                     break;
             }
         }
