@@ -4,7 +4,7 @@ record BankInfo(String bankname, String branch) {
 }
 
 enum MenuOption {
-    OPEN_ACCOUNT, DEPOSIT, WITHDRAW, TRANSFER, EXIT
+        OPEN_ACCOUNT, DEPOSIT, WITHDRAW, TRANSFER, EXIT
 }
 
 public class MiniBank {
@@ -18,15 +18,61 @@ public class MiniBank {
         System.out.println("Welcome to " + bank.bankname() + " - " + bank.branch());
         System.out.println("========================================");
 
-        Account[] accounts = {
-                new Account("Account 1", 1000),
-                new Account("Account 2", 2000),
-                new Account("Account 3", 3000)
-        };
+        System.out.println("\n========== CREATE ACCOUNTS ==========");
 
-        accounts[0].deposit(500);
-        accounts[1].deposit(1000);
-        accounts[2].withdraw(500);
+        System.out.print("Enter number of accounts: ");
+        int n = sc.nextInt();
+        sc.nextLine();
+
+        Account[] accounts = new Account[n];
+
+        for (int i = 0; i < n; i++) {
+
+            System.out.println("\nAccount " + (i + 1));
+            System.out.println("1. Savings Account");
+            System.out.println("2. Current Account");
+            System.out.println("3. Fixed Deposit Account");
+
+            System.out.print("Enter account type: ");
+            int type = sc.nextInt();
+            sc.nextLine();
+
+            System.out.print("Enter owner name: ");
+            String ownerName = sc.nextLine();
+
+            System.out.print("Enter opening balance: ");
+            long balance = sc.nextLong();
+
+            if (type == 1) {
+
+                System.out.print("Enter minimum balance: ");
+                long minBalance = sc.nextLong();
+
+                accounts[i] = new SavingsAccount(
+                        ownerName, balance, minBalance);
+
+            } else if (type == 2) {
+
+                System.out.print("Enter overdraft limit: ");
+                long overdraftLimit = sc.nextLong();
+
+                accounts[i] = new CurrentAccount(
+                        ownerName, balance, overdraftLimit);
+
+            } else if (type == 3) {
+
+                accounts[i] = new FixedDepositAccount(
+                        ownerName, balance);
+
+            } else {
+
+                System.out.println("Invalid account type.");
+                i--;
+                continue;
+            }
+
+            sc.nextLine();
+        }
 
         System.out.println("\n========== ACCOUNT DETAILS ==========");
 
@@ -34,10 +80,23 @@ public class MiniBank {
             System.out.println(account);
         }
 
+        System.out.println("\n========== INTEREST RATES ==========");
+
+        for (Account account : accounts) {
+
+            System.out.println(
+                    account.getOwnerName() + " : "
+                    + account.interestRate());
+
+            if (account instanceof SavingsAccount) {
+                System.out.println("This is a Savings Account.");
+            }
+        }
+
         System.out.println("\n========== ACCOUNT COMPARISON ==========");
 
         Account a1 = accounts[0];
-        Account a2 = accounts[1];
+        Account a2 = accounts.length > 1 ? accounts[1] : accounts[0];
 
         System.out.println("Are Account 1 and Account 2 equal? "
                 + a1.equals(a2));
@@ -69,12 +128,16 @@ public class MiniBank {
         System.out.print("Pincode: ");
         String pincode = sc.nextLine();
 
-        Customer.Address address = new Customer.Address(line, city, pincode);
+        Customer.Address address =
+                new Customer.Address(line, city, pincode);
 
         customer.setAddress(address);
 
         System.out.println("\nCustomer ID: " + customer.getCustomerId());
         System.out.println("Name: " + customer.getName());
+        System.out.println("Email: " + customer.getEmail());
+        System.out.println("Mobile: " + customer.getMobile());
+
         System.out.println("Address: "
                 + customer.getAddress().getLine() + ", "
                 + customer.getAddress().getCity() + ", "
@@ -113,7 +176,8 @@ public class MiniBank {
 
         System.out.println("\n========== COMMAND PARSER ==========");
 
-        Command command = CommandParser.parse("DEPOSIT AC0001 500");
+        Command command =
+                CommandParser.parse("DEPOSIT AC0001 500");
 
         System.out.println("Type: " + command.type());
         System.out.println("Account Number: " + command.accountNumber());
