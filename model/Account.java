@@ -19,7 +19,7 @@ public abstract class Account
     private static int accountCounter = 1000;
 
     @Id
-    private final String accountNumber;
+    private String accountNumber;
 
     private String ownerName;
 
@@ -29,14 +29,54 @@ public abstract class Account
     private boolean active;
 
     public Account(String ownerName, long openingBalance) {
-        this.accountNumber = String.format("AC%04d", ++accountCounter);
-        this.ownerName = ownerName;
+        if (ownerName == null || ownerName.isBlank()) {
+            throw new IllegalArgumentException(
+                    "Owner name cannot be empty.");
+        }
+
+        if (openingBalance < 0) {
+            throw new IllegalArgumentException(
+                    "Opening balance cannot be negative.");
+        }
+
+        synchronized (Account.class) {
+            this.accountNumber = String.format("AC%04d", ++accountCounter);
+        }
+
+        this.ownerName = ownerName.trim();
         this.balance = openingBalance;
         this.active = true;
     }
 
     public Account(String ownerName) {
         this(ownerName, 0);
+    }
+
+    public static synchronized void updateAccountCounter(
+            String accountNumber) {
+
+        if (accountNumber == null
+                || !accountNumber.matches("AC\\d+")) {
+            return;
+        }
+
+        try {
+            int number = Integer.parseInt(accountNumber.substring(2));
+            accountCounter = Math.max(accountCounter, number);
+        } catch (NumberFormatException ignored) {
+            // Ignore malformed account numbers.
+        }
+    }
+
+    /**
+     * Repairs a duplicate ID discovered while loading saved data.
+     * This method changes only the ID, not the account's balance
+     * or other account details.
+     */
+    public synchronized void repairDuplicateAccountNumber() {
+        synchronized (Account.class) {
+            accountNumber = String.format("AC%04d", ++accountCounter);
+        }
     }
 
     @Override
@@ -49,7 +89,13 @@ public abstract class Account
         }
 
         if (!active) {
-            throw new IllegalStateException("Account is inactive.");
+            throw new IllegalStateException(
+                    "Account is inactive.");
+        }
+
+        if (Long.MAX_VALUE - balance < amount) {
+            throw new InvalidAmountException(
+                    "Deposit exceeds the maximum supported balance.");
         }
 
         balance += amount;
@@ -57,7 +103,8 @@ public abstract class Account
 
     @Override
     public synchronized boolean withdraw(long amount)
-            throws InsufficientFundsException, InvalidAmountException {
+            throws InsufficientFundsException,
+            InvalidAmountException {
 
         if (amount <= 0) {
             throw new InvalidAmountException(
@@ -65,14 +112,16 @@ public abstract class Account
         }
 
         if (!active) {
-            throw new IllegalStateException("Account is inactive.");
-        }
-
-        if (amount > balance && !canWithdraw(amount)) {
-            throw new InsufficientFundsException(amount - balance);
+            throw new IllegalStateException(
+                    "Account is inactive.");
         }
 
         if (!canWithdraw(amount)) {
+            if (amount > balance) {
+                throw new InsufficientFundsException(
+                        amount - balance);
+            }
+
             throw new InvalidAmountException(
                     "Withdrawal is not permitted by account rules.");
         }
@@ -91,16 +140,21 @@ public abstract class Account
         return getBalance() * interestRate() / 100.0;
     }
 
-    public String getAccountNumber() {
+    public synchronized String getAccountNumber() {
         return accountNumber;
     }
 
-    public String getOwnerName() {
+    public synchronized String getOwnerName() {
         return ownerName;
     }
 
-    public void setOwnerName(String ownerName) {
-        this.ownerName = ownerName;
+    public synchronized void setOwnerName(String ownerName) {
+        if (ownerName == null || ownerName.isBlank()) {
+            throw new IllegalArgumentException(
+                    "Owner name cannot be empty.");
+        }
+
+        this.ownerName = ownerName.trim();
     }
 
     @Override
@@ -108,15 +162,15 @@ public abstract class Account
         return balance;
     }
 
-    public boolean isActive() {
+    public synchronized boolean isActive() {
         return active;
     }
 
-    public void closeAccount() {
+    public synchronized void closeAccount() {
         active = false;
     }
 
-    public String getStatement() {
+    public synchronized String getStatement() {
         return "Account Number: " + accountNumber
                 + "\nOwner: " + ownerName
                 + "\nBalance: " + balance
@@ -136,8 +190,23 @@ public abstract class Account
                     "Cannot transfer to the same account.");
         }
 
-        synchronized (this) {
-            synchronized (to) {
+        if (amount <= 0) {
+            throw new InvalidAmountException(
+                    "Transfer amount must be greater than zero.");
+        }
+
+        // Lock accounts in a consistent order to reduce deadlock risk.
+        Account first = this;
+        Account second = to;
+
+        if (first.getAccountNumber().compareTo(
+                second.getAccountNumber()) > 0) {
+            first = to;
+            second = this;
+        }
+
+        synchronized (first) {
+            synchronized (second) {
                 withdraw(amount);
 
                 try {
@@ -150,13 +219,11 @@ public abstract class Account
                     }
 
                     throw new IllegalStateException(
-                            "Transfer failed and was rolled back.", e);
+                            "Transfer failed and rollback was attempted.",
+                            e);
                 }
             }
         }
-
-        System.out.println("Transfer successful.");
-        System.out.println("Transfer operation completed.");
     }
 
     @Override
@@ -166,7 +233,8 @@ public abstract class Account
                     "Cannot compare an account with null.");
         }
 
-        return this.accountNumber.compareTo(other.accountNumber);
+        return getAccountNumber().compareTo(
+                other.getAccountNumber());
     }
 
     @Override
@@ -185,11 +253,13 @@ public abstract class Account
         }
 
         Account other = (Account) obj;
-        return Objects.equals(accountNumber, other.accountNumber);
+
+        return Objects.equals(
+                getAccountNumber(), other.getAccountNumber());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(accountNumber);
+        return Objects.hash(getAccountNumber());
     }
 }
