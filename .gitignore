@@ -11,3 +11,7 @@ target/
 
 # Windows system files
 Thumbs.db
+/out/
+/MiniBank.jar
+/sources.txt
+/META-INF/

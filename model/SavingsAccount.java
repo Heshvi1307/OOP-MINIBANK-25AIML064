@@ -1,8 +1,12 @@
-public class SavingsAccount extends Account {
+
+package model;
+
+public class SavingsAccount extends Account implements Premium {
 
     private long minBalance;
 
-    public SavingsAccount(String ownerName, long openingBalance, long minBalance) {
+    public SavingsAccount(
+            String ownerName, long openingBalance, long minBalance) {
         super(ownerName, openingBalance);
         this.minBalance = minBalance;
     }
@@ -14,6 +18,6 @@ public class SavingsAccount extends Account {
 
     @Override
     public boolean canWithdraw(long amount) {
-        return getBalance() - amount >= minBalance;
+        return amount > 0 && getBalance() - amount >= minBalance;
     }
 }

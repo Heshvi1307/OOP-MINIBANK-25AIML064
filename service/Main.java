@@ -1,4 +1,12 @@
+
+package service;
+
 import java.util.Scanner;
+
+import model.Account;
+import model.SavingsAccount;
+import model.CurrentAccount;
+import model.FixedDepositAccount;
 
 public class Main {
 
@@ -9,6 +17,12 @@ public class Main {
         System.out.println("Enter number of accounts:");
         int n = sc.nextInt();
         sc.nextLine();
+
+        if (n <= 0) {
+            System.out.println("Number of accounts must be positive.");
+            sc.close();
+            return;
+        }
 
         Account[] accounts = new Account[n];
 
@@ -34,8 +48,7 @@ public class Main {
                 long minBalance = sc.nextLong();
 
                 accounts[i] = new SavingsAccount(
-                        name, balance, minBalance
-                );
+                        name, balance, minBalance);
 
             } else if (choice == 2) {
 
@@ -43,29 +56,31 @@ public class Main {
                 long overdraftLimit = sc.nextLong();
 
                 accounts[i] = new CurrentAccount(
-                        name, balance, overdraftLimit
-                );
+                        name, balance, overdraftLimit);
 
             } else if (choice == 3) {
 
-                accounts[i] = new FixedDepositAccount(
-                        name, balance
-                );
+                accounts[i] = new FixedDepositAccount(name, balance);
 
             } else {
                 System.out.println("Invalid account type.");
                 i--;
+                continue;
             }
+
+            sc.nextLine();
         }
 
-        System.out.println("\nInterest Rates:");
+        System.out.println("\nInterest Rates and Yearly Interest:");
 
         for (Account account : accounts) {
-            System.out.println(account.interestRate());
+            System.out.println(
+                    "Interest rate: " + account.interestRate() + "%");
 
-            if (account instanceof SavingsAccount) {
-                System.out.println("Savings Account");
-            }
+            System.out.println(
+                    "Yearly interest: Rs." + account.yearlyInterest());
+
+            System.out.println("Balance: Rs." + account.getBalance());
         }
 
         sc.close();

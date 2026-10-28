@@ -1,3 +1,6 @@
+
+package util;
+
 import java.util.regex.Pattern;
 
 public class Validator {
@@ -27,6 +30,6 @@ public class Validator {
     }
 
     public static boolean isValidAmount(String amount) {
-        return amount.matches("^[1-9][0-9]*$");
+        return amount != null && amount.matches("^[1-9][0-9]*$");
     }
 }

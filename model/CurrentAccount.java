@@ -1,8 +1,12 @@
+
+package model;
+
 public class CurrentAccount extends Account {
 
     private long overdraftLimit;
 
-    public CurrentAccount(String ownerName, long openingBalance, long overdraftLimit) {
+    public CurrentAccount(
+            String ownerName, long openingBalance, long overdraftLimit) {
         super(ownerName, openingBalance);
         this.overdraftLimit = overdraftLimit;
     }
@@ -14,6 +18,7 @@ public class CurrentAccount extends Account {
 
     @Override
     public boolean canWithdraw(long amount) {
-        return getBalance() - amount >= -overdraftLimit;
+        return amount > 0
+                && getBalance() - amount >= -overdraftLimit;
     }
 }
