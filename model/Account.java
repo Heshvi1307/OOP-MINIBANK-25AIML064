@@ -1,8 +1,8 @@
 
 package model;
 
+import java.io.Serializable;
 import java.util.Objects;
-
 import exception.AccountNotFoundException;
 import exception.BankException;
 import exception.InsufficientFundsException;
@@ -10,13 +10,12 @@ import exception.InvalidAmountException;
 import model.annotation.Id;
 import model.annotation.Positive;
 
-public abstract class Account implements Transactable, InterestBearing {
-
+public abstract class Account implements Transactable, InterestBearing, Serializable {
+    private static final long serialVersionUID = 1L;
     private static int accountCounter = 1000;
 
     @Id
     private final String accountNumber;
-
     private String ownerName;
 
     @Positive
@@ -36,43 +35,31 @@ public abstract class Account implements Transactable, InterestBearing {
     }
 
     @Override
-    public synchronized void deposit(long amount)
-            throws InvalidAmountException {
-
+    public synchronized void deposit(long amount) throws InvalidAmountException {
         if (amount <= 0) {
-            throw new InvalidAmountException(
-                    "Deposit amount must be greater than zero.");
+            throw new InvalidAmountException("Deposit amount must be greater than zero.");
         }
-
         if (!active) {
             throw new IllegalStateException("Account is inactive.");
         }
-
         balance += amount;
     }
 
     @Override
     public synchronized boolean withdraw(long amount)
             throws InsufficientFundsException, InvalidAmountException {
-
         if (amount <= 0) {
-            throw new InvalidAmountException(
-                    "Withdrawal amount must be greater than zero.");
+            throw new InvalidAmountException("Withdrawal amount must be greater than zero.");
         }
-
         if (!active) {
             throw new IllegalStateException("Account is inactive.");
         }
-
-        if (amount > balance) {
+        if (amount > balance && !canWithdraw(amount)) {
             throw new InsufficientFundsException(amount - balance);
         }
-
         if (!canWithdraw(amount)) {
-            throw new InvalidAmountException(
-                    "Withdrawal is not permitted by account rules.");
+            throw new InvalidAmountException("Withdrawal is not permitted by account rules.");
         }
-
         balance -= amount;
         return true;
     }
@@ -100,7 +87,7 @@ public abstract class Account implements Transactable, InterestBearing {
     }
 
     @Override
-    public long getBalance() {
+    public synchronized long getBalance() {
         return balance;
     }
 
@@ -120,23 +107,30 @@ public abstract class Account implements Transactable, InterestBearing {
     }
 
     public void transfer(Account to, long amount) throws BankException {
-        try {
-            if (to == null) {
-                throw new AccountNotFoundException(
-                        "Destination account was not found.");
-            }
-
-            withdraw(amount);
-            to.deposit(amount);
-
-            System.out.println("Transfer successful.");
-
-        } catch (BankException e) {
-            throw e;
-
-        } finally {
-            System.out.println("Transfer operation completed.");
+        if (to == null) {
+            throw new AccountNotFoundException("Destination account was not found.");
         }
+        if (to == this) {
+            throw new IllegalArgumentException("Cannot transfer to the same account.");
+        }
+
+        synchronized (this) {
+            synchronized (to) {
+                withdraw(amount);
+                try {
+                    to.deposit(amount);
+                } catch (Exception e) {
+                    try {
+                        deposit(amount);
+                    } catch (Exception rollbackError) {
+                        e.addSuppressed(rollbackError);
+                    }
+                    throw new IllegalStateException("Transfer failed and was rolled back.", e);
+                }
+            }
+        }
+        System.out.println("Transfer successful.");
+        System.out.println("Transfer operation completed.");
     }
 
     @Override
@@ -146,14 +140,10 @@ public abstract class Account implements Transactable, InterestBearing {
 
     @Override
     public boolean equals(Object obj) {
-        if (this == obj) {
+        if (this == obj)
             return true;
-        }
-
-        if (!(obj instanceof Account)) {
+        if (!(obj instanceof Account))
             return false;
-        }
-
         Account other = (Account) obj;
         return Objects.equals(accountNumber, other.accountNumber);
     }

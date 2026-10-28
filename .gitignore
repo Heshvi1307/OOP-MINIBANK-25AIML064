@@ -15,3 +15,6 @@ Thumbs.db
 /MiniBank.jar
 /sources.txt
 /META-INF/
+
+# Generated persistence and report files
+/data/

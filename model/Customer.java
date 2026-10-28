@@ -1,15 +1,17 @@
 
 package model;
 
+import java.io.Serializable;
 import model.annotation.MaxLength;
 
-public class Customer implements Cloneable {
+public class Customer implements Cloneable, Serializable {
+    private static final long serialVersionUID = 1L;
+
     @MaxLength(10)
     private String name;
     private String email;
-    private String mobile;
+    private transient String mobile;
     private final String customerId;
-
     private Address address;
 
     private static long customerCounter = 100;
@@ -49,7 +51,8 @@ public class Customer implements Cloneable {
         this.address = address;
     }
 
-    public static class Address {
+    public static class Address implements Serializable {
+        private static final long serialVersionUID = 1L;
 
         private String line;
         private String city;
@@ -79,7 +82,15 @@ public class Customer implements Cloneable {
         try {
             return (Customer) super.clone();
         } catch (CloneNotSupportedException e) {
-            throw new AssertionError();
+            throw new AssertionError(e);
         }
+    }
+
+    @Override
+    public String toString() {
+        return "Customer ID: " + customerId
+                + "\nName: " + name
+                + "\nEmail: " + email
+                + "\nMobile: " + mobile;
     }
 }

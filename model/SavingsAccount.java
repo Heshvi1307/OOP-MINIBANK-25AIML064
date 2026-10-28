@@ -1,12 +1,14 @@
 
 package model;
 
-public class SavingsAccount extends Account implements Premium {
+import java.io.Serializable;
+
+public class SavingsAccount extends Account implements Premium, Serializable {
+    private static final long serialVersionUID = 1L;
 
     private long minBalance;
 
-    public SavingsAccount(
-            String ownerName, long openingBalance, long minBalance) {
+    public SavingsAccount(String ownerName, long openingBalance, long minBalance) {
         super(ownerName, openingBalance);
         this.minBalance = minBalance;
     }
