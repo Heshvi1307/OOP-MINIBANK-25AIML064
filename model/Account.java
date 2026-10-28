@@ -1,10 +1,14 @@
 
 package model;
 
+import java.util.Objects;
+
+import exception.AccountNotFoundException;
+import exception.BankException;
+import exception.InsufficientFundsException;
+import exception.InvalidAmountException;
 import model.annotation.Id;
 import model.annotation.Positive;
-
-import java.util.Objects;
 
 public abstract class Account implements Transactable, InterestBearing {
 
@@ -32,22 +36,39 @@ public abstract class Account implements Transactable, InterestBearing {
     }
 
     @Override
-    public void deposit(long amount) {
+    public void deposit(long amount) throws InvalidAmountException {
         if (amount <= 0) {
-            throw new IllegalArgumentException("Deposit amount must be positive");
+            throw new InvalidAmountException(
+                    "Deposit amount must be greater than zero.");
         }
 
         if (!active) {
-            throw new IllegalStateException("Account is inactive");
+            throw new IllegalStateException("Account is inactive.");
         }
 
         balance += amount;
     }
 
     @Override
-    public boolean withdraw(long amount) {
-        if (amount <= 0 || !active || !canWithdraw(amount)) {
-            return false;
+    public boolean withdraw(long amount)
+            throws InsufficientFundsException, InvalidAmountException {
+
+        if (amount <= 0) {
+            throw new InvalidAmountException(
+                    "Withdrawal amount must be greater than zero.");
+        }
+
+        if (!active) {
+            throw new IllegalStateException("Account is inactive.");
+        }
+
+        if (amount > balance) {
+            throw new InsufficientFundsException(amount - balance);
+        }
+
+        if (!canWithdraw(amount)) {
+            throw new InvalidAmountException(
+                    "Withdrawal is not permitted by account rules.");
         }
 
         balance -= amount;
@@ -96,24 +117,24 @@ public abstract class Account implements Transactable, InterestBearing {
                 + "\nActive: " + active;
     }
 
-    public static boolean transfer(
-            Account from, Account to, long amount) {
-
-        if (from == null || to == null || amount <= 0) {
-            return false;
-        }
-
-        if (from.withdraw(amount)) {
-            try {
-                to.deposit(amount);
-                return true;
-            } catch (RuntimeException e) {
-                from.deposit(amount);
-                return false;
+    public void transfer(Account to, long amount) throws BankException {
+        try {
+            if (to == null) {
+                throw new AccountNotFoundException(
+                        "Destination account was not found.");
             }
-        }
 
-        return false;
+            withdraw(amount);
+            to.deposit(amount);
+
+            System.out.println("Transfer successful.");
+
+        } catch (BankException e) {
+            throw e;
+
+        } finally {
+            System.out.println("Transfer operation completed.");
+        }
     }
 
     @Override
