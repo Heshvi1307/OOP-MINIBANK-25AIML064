@@ -1,8 +1,10 @@
 
 package model;
 
-public class Customer implements Cloneable {
+import model.annotation.MaxLength;
 
+public class Customer implements Cloneable {
+    @MaxLength(10)
     private String name;
     private String email;
     private String mobile;

@@ -1,282 +1,152 @@
 
 package service;
 
-import static util.StatementFormatter.buildStatement;
-
 import java.util.Scanner;
 
 import model.Account;
-import model.CurrentAccount;
-import model.Customer;
-import model.FixedDepositAccount;
-import model.Premium;
 import model.SavingsAccount;
+import model.CurrentAccount;
+import model.FixedDepositAccount;
+import model.Customer;
 import model.WithdrawRule;
+import model.Premium;
+import util.AnnotationValidator;
+import util.Validator;
 import util.Command;
 import util.CommandParser;
-import util.Validator;
 
-record BankInfo(String bankname, String branch) {
-}
-
-enum MenuOption {
-        OPEN_ACCOUNT, DEPOSIT, WITHDRAW, TRANSFER, EXIT
-}
+import static util.StatementFormatter.buildStatement;
 
 public class MiniBank {
 
         public static void main(String[] args) {
 
-                BankInfo bank = new BankInfo("MiniBank", "Main Branch");
                 Scanner sc = new Scanner(System.in);
 
-                System.out.println("========================================");
-                System.out.println("Welcome to " + bank.bankname()
-                                + " - " + bank.branch());
-                System.out.println("========================================");
+                System.out.println("================================");
+                System.out.println("       WELCOME TO MINIBANK      ");
+                System.out.println("================================");
 
-                System.out.println("\n========== CREATE ACCOUNTS ==========");
-                System.out.print("Enter number of accounts: ");
+                Account savings = new SavingsAccount("Alice", 5000, 1000);
+                Account current = new CurrentAccount("Bob", 10000, 2000);
+                Account fixedDeposit = new FixedDepositAccount("Charlie", 15000);
 
-                int n = sc.nextInt();
-                sc.nextLine();
+                System.out.println("\n--- Account Details ---");
+                System.out.println(savings);
+                System.out.println();
+                System.out.println(current);
+                System.out.println();
+                System.out.println(fixedDeposit);
 
-                if (n <= 0) {
-                        System.out.println("Number of accounts must be positive.");
-                        sc.close();
-                        return;
+                System.out.println("\n--- Yearly Interest ---");
+                System.out.println("Savings Interest: " + savings.yearlyInterest());
+                System.out.println("Current Interest: " + current.yearlyInterest());
+                System.out.println("Fixed Deposit Interest: "
+                                + fixedDeposit.yearlyInterest());
+
+                System.out.println("\n--- Premium Account Check ---");
+                if (savings instanceof Premium) {
+                        System.out.println("Savings account has Premium status.");
+                } else {
+                        System.out.println("Savings account is not Premium.");
                 }
 
-                Account[] accounts = new Account[n];
-
-                for (int i = 0; i < n; i++) {
-
-                        System.out.println("\nAccount " + (i + 1));
-                        System.out.println("1. Savings Account");
-                        System.out.println("2. Current Account");
-                        System.out.println("3. Fixed Deposit Account");
-
-                        System.out.print("Enter account type: ");
-                        int type = sc.nextInt();
-                        sc.nextLine();
-
-                        System.out.print("Enter owner name: ");
-                        String ownerName = sc.nextLine();
-
-                        System.out.print("Enter opening balance: ");
-                        long balance = sc.nextLong();
-
-                        if (type == 1) {
-                                System.out.print("Enter minimum balance: ");
-                                long minBalance = sc.nextLong();
-
-                                accounts[i] = new SavingsAccount(
-                                                ownerName, balance, minBalance);
-
-                        } else if (type == 2) {
-                                System.out.print("Enter overdraft limit: ");
-                                long overdraftLimit = sc.nextLong();
-
-                                accounts[i] = new CurrentAccount(
-                                                ownerName, balance, overdraftLimit);
-
-                        } else if (type == 3) {
-                                accounts[i] = new FixedDepositAccount(
-                                                ownerName, balance);
-
-                        } else {
-                                System.out.println("Invalid account type.");
-                                i--;
-                                continue;
-                        }
-
-                        sc.nextLine();
-                }
-
-                System.out.println("\n========== ACCOUNT DETAILS ==========");
-
-                for (Account account : accounts) {
-                        System.out.println(account);
-                }
-
-                System.out.println("\n========== INTEREST RATES ==========");
-
-                for (Account account : accounts) {
-                        System.out.println(account.getOwnerName() + " : "
-                                        + account.interestRate() + "%");
-
-                        System.out.println("Yearly interest: Rs."
-                                        + account.yearlyInterest());
-
-                        if (account instanceof SavingsAccount) {
-                                System.out.println("This is a Savings Account.");
-                        }
-
-                        if (account instanceof Premium) {
-                                System.out.println("Premium account marker detected.");
-                        }
-                }
-
-                System.out.println("\n========== WITHDRAW RULES ==========");
-
-                Account testAccount = accounts[0];
-                long testAmount = 100;
-
+                System.out.println("\n--- WithdrawRule: Anonymous Class ---");
                 WithdrawRule anonymousRule = new WithdrawRule() {
                         @Override
                         public boolean allow(Account account, long amount) {
-                                return amount > 0 && account.canWithdraw(amount);
+                                return amount > 0 && amount <= account.getBalance();
                         }
                 };
 
-                WithdrawRule lambdaRule = (account, amount) -> amount > 0 && account.canWithdraw(amount);
+                System.out.println("Can withdraw 1000: "
+                                + anonymousRule.allow(savings, 1000));
 
-                System.out.println("Anonymous class allows withdrawal: "
-                                + anonymousRule.allow(testAccount, testAmount));
+                System.out.println("\n--- WithdrawRule: Lambda ---");
+                WithdrawRule lambdaRule = (account, amount) -> amount > 0
+                                && amount <= account.getBalance();
 
-                System.out.println("Lambda allows withdrawal: "
-                                + lambdaRule.allow(testAccount, testAmount));
+                System.out.println("Can withdraw 2000: "
+                                + lambdaRule.allow(savings, 2000));
 
-                System.out.println("\n========== ACCOUNT COMPARISON ==========");
-
-                Account a1 = accounts[0];
-                Account a2 = accounts.length > 1 ? accounts[1] : accounts[0];
-
-                System.out.println("Are Account 1 and Account 2 equal? "
-                                + a1.equals(a2));
-
-                System.out.println("Is Account 1 an Account object? "
-                                + (a1 instanceof Account));
-
-                System.out.println("\n========== CUSTOMER ==========");
-
-                System.out.print("Enter customer name: ");
-                String name = sc.nextLine();
-
-                System.out.print("Enter email: ");
-                String email = sc.nextLine();
-
-                System.out.print("Enter mobile: ");
-                String mobile = sc.nextLine();
-
-                Customer customer = new Customer(name, email, mobile);
-
-                System.out.println("\nEnter address details:");
-
-                System.out.print("Address: ");
-                String line = sc.nextLine();
-
-                System.out.print("City: ");
-                String city = sc.nextLine();
-
-                System.out.print("Pincode: ");
-                String pincode = sc.nextLine();
-
-                Customer.Address address = new Customer.Address(line, city, pincode);
-
-                customer.setAddress(address);
-
-                System.out.println("\nCustomer ID: " + customer.getCustomerId());
-                System.out.println("Name: " + customer.getName());
-                System.out.println("Email: " + customer.getEmail());
-                System.out.println("Mobile: " + customer.getMobile());
-
-                System.out.println("Address: "
-                                + customer.getAddress().getLine() + ", "
-                                + customer.getAddress().getCity() + ", "
-                                + customer.getAddress().getPincode());
+                System.out.println("\n--- Customer Details ---");
+                Customer customer = new Customer(
+                                "AlexandriaTest", "alice@example.com", "9876543210");
+                System.out.println(customer);
 
                 Customer clonedCustomer = customer.clone();
+                System.out.println("Cloned Customer: " + clonedCustomer);
 
-                System.out.println("Customer cloned successfully: "
-                                + (clonedCustomer != null));
-
-                System.out.println("\n========== VALIDATOR TESTS ==========");
-
+                System.out.println("\n--- Validator Tests ---");
                 System.out.println("Valid mobile: "
                                 + Validator.isValidMobile("9876543210"));
-
-                System.out.println("Invalid mobile: "
-                                + Validator.isValidMobile("12345"));
-
                 System.out.println("Valid email: "
-                                + Validator.isValidEmail("abc@xyz.com"));
+                                + Validator.isValidEmail("alice@example.com"));
 
-                System.out.println("Invalid email: "
-                                + Validator.isValidEmail("abc@xyz"));
-
-                System.out.println("Valid PAN: "
-                                + Validator.isValidPan("ABCDE1234F"));
-
-                System.out.println("Invalid PAN: "
-                                + Validator.isValidPan("ABC123"));
-
-                System.out.println("Valid IFSC: "
-                                + Validator.isValidIfsc("SBIN0001234"));
-
-                System.out.println("Invalid IFSC: "
-                                + Validator.isValidIfsc("SBIN123"));
-
-                System.out.println("\n========== COMMAND PARSER ==========");
-
+                System.out.println("\n--- Command Parser ---");
                 Command command = CommandParser.parse("DEPOSIT AC0001 500");
+                System.out.println(command);
 
-                System.out.println("Type: " + command.type());
-                System.out.println("Account Number: " + command.accountNumber());
-                System.out.println("Amount: " + command.amount());
+                System.out.println("\n--- Account Statement ---");
+                System.out.println(buildStatement(savings));
 
-                System.out.println("\n========== ACCOUNT STATEMENT ==========");
+                // Lab 07: Annotation Validation
+                System.out.println("\n--- Lab 07: Annotation Validation ---");
 
-                System.out.println(buildStatement(accounts[0]));
+                System.out.print("Enter account holder name: ");
+                String name = sc.nextLine();
 
-                boolean exit = false;
+                System.out.print("Enter account balance (enter -100 to test validation): ");
+                long balance = sc.nextLong();
 
-                while (!exit) {
-
-                        System.out.println("\nPlease select an option:");
-                        System.out.println("1. Open Account");
-                        System.out.println("2. Deposit");
-                        System.out.println("3. Withdraw");
-                        System.out.println("4. Transfer");
-                        System.out.println("5. Exit");
-                        System.out.print("Enter your choice: ");
-
-                        int choice = sc.nextInt();
-
-                        MenuOption option = switch (choice) {
-                                case 1 -> MenuOption.OPEN_ACCOUNT;
-                                case 2 -> MenuOption.DEPOSIT;
-                                case 3 -> MenuOption.WITHDRAW;
-                                case 4 -> MenuOption.TRANSFER;
-                                case 5 -> MenuOption.EXIT;
-                                default -> null;
-                        };
-
-                        if (option == null) {
-                                System.out.println("Invalid option. Please try again.");
-                                continue;
+                Account testAccount = new Account(name, balance) {
+                        @Override
+                        public boolean canWithdraw(long amount) {
+                                return false;
                         }
 
-                        switch (option) {
-                                case OPEN_ACCOUNT ->
-                                        System.out.println("Open Account — to be implemented in a later lab.");
+                        @Override
+                        public double interestRate() {
+                                return 0.0;
+                        }
+                };
 
-                                case DEPOSIT ->
-                                        System.out.println("Deposit — to be implemented in a later lab.");
+                String[] errors = AnnotationValidator.validate(testAccount);
 
-                                case WITHDRAW ->
-                                        System.out.println("Withdraw — to be implemented in a later lab.");
-
-                                case TRANSFER ->
-                                        System.out.println("Transfer — to be implemented in a later lab.");
-
-                                case EXIT -> {
-                                        exit = true;
-                                        System.out.println(
-                                                        "Thank you for using MiniBank. Goodbye!");
-                                }
+                if (errors.length == 0) {
+                        System.out.println("No validation errors.");
+                } else {
+                        System.out.println("Validation Errors:");
+                        for (String error : errors) {
+                                System.out.println(error);
                         }
                 }
+
+                System.out.println("\n--- Valid Account Validation ---");
+                String[] validErrors = AnnotationValidator.validate(savings);
+
+                if (validErrors.length == 0) {
+                        System.out.println("No validation errors.");
+                } else {
+                        for (String error : validErrors) {
+                                System.out.println(error);
+                        }
+                }
+
+                System.out.println("\n--- MaxLength Annotation Test ---");
+                String[] customerErrors = AnnotationValidator.validate(customer);
+
+                if (customerErrors.length == 0) {
+                        System.out.println("Customer fields are valid.");
+                } else {
+                        for (String error : customerErrors) {
+                                System.out.println(error);
+                        }
+                }
+
+                System.out.println("\n================================");
+                System.out.println("       MINIBANK DEMO ENDED      ");
+                System.out.println("================================");
 
                 sc.close();
         }
