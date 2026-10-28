@@ -43,27 +43,22 @@ public class Main {
             long balance = sc.nextLong();
 
             if (choice == 1) {
-
                 System.out.println("Enter minimum balance:");
                 long minBalance = sc.nextLong();
 
-                accounts[i] = new SavingsAccount(
-                        name, balance, minBalance);
+                accounts[i] = new SavingsAccount(name, balance, minBalance);
 
             } else if (choice == 2) {
-
                 System.out.println("Enter overdraft limit:");
                 long overdraftLimit = sc.nextLong();
 
-                accounts[i] = new CurrentAccount(
-                        name, balance, overdraftLimit);
+                accounts[i] = new CurrentAccount(name, balance, overdraftLimit);
 
             } else if (choice == 3) {
-
                 accounts[i] = new FixedDepositAccount(name, balance);
 
             } else {
-                System.out.println("Invalid account type.");
+                System.out.println("Invalid account type. Try again.");
                 i--;
                 continue;
             }
@@ -80,7 +75,8 @@ public class Main {
             System.out.println(
                     "Yearly interest: Rs." + account.yearlyInterest());
 
-            System.out.println("Balance: Rs." + account.getBalance());
+            System.out.println(
+                    "Balance: Rs." + account.getBalance());
         }
 
         sc.close();
